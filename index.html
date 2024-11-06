@@ -3,15 +3,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Arduino Flasher</title>
+    <title>Arduino Flasher with Serial Interface</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Optional: Link to the CSS file -->
-    <!-- <link rel="stylesheet" href="style.css"> -->
+    <!-- Inline CSS for simplicity -->
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 50px;
+            padding: 20px;
         }
 
         h1 {
@@ -19,24 +18,81 @@
         }
 
         button {
-            padding: 15px 30px;
-            font-size: 16px;
-            margin: 10px;
+            padding: 10px 20px;
+            font-size: 14px;
+            margin: 5px;
             cursor: pointer;
         }
 
         #status {
             margin-top: 20px;
             font-weight: bold;
+            color: green;
+        }
+
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            background-color: #f9f9f9;
+        }
+
+        #commandInput {
+            width: 80%;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        #sendCommand {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .command-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .command-buttons button {
+            flex: 1 0 21%; /* Adjust the percentage to control the button width */
+            margin: 5px;
         }
     </style>
 </head>
 <body>
-    <h1>Arduino Flasher</h1>
-    <p>Use this interface to flash your Arduino with the pre-compiled firmware.</p>
-    <button id="connect">Connect to Arduino</button>
-    <button id="flash" disabled>Flash Firmware</button>
+    <h1>Arduino Flasher with Serial Interface</h1>
+    <p>Use this interface to flash your SAMD21-based Arduino and interact via serial commands.</p>
+    <div>
+        <button id="connect">Connect</button>
+        <button id="disconnect" disabled>Disconnect</button>
+        <button id="flash" disabled>Flash Firmware</button>
+    </div>
+
+    <div class="command-buttons">
+        <button id="cmd0" disabled>0 - Stop all effects and turn off LEDs</button>
+        <button id="cmd1" disabled>1 - Turn on LED 1</button>
+        <button id="cmd2" disabled>2 - Turn on LED 2</button>
+        <button id="cmd3" disabled>3 - Turn on LED 3</button>
+        <button id="cmd4" disabled>4 - Turn on LED 4</button>
+        <button id="cmd5" disabled>5 - Turn on LED 5</button>
+        <button id="cmd6" disabled>6 - Turn on LED 6</button>
+        <button id="cmd7" disabled>7 - Turn on LED 7</button>
+        <button id="cmd8" disabled>8 - Turn on LED 8</button>
+        <button id="cmd9" disabled>9 - Turn on NeoPixels</button>
+    </div>
+
+    <div>
+        <input type="text" id="commandInput" placeholder="Enter command here..." disabled>
+        <button id="sendCommand" disabled>Send Command</button>
+    </div>
+
     <div id="status"></div>
+    <div id="response"></div>
 
     <!-- Include the script file -->
     <script src="script.js"></script>
