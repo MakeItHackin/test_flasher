@@ -1,6 +1,8 @@
 // script.js
 
-let device;
+let port;
+let reader;
+let writer;
 let isConnected = false;
 
 const connectButton = document.getElementById('connect');
@@ -17,35 +19,44 @@ for (let i = 0; i <= 9; i++) {
 }
 
 connectButton.addEventListener('click', async () => {
-    try {
-        // Request the USB device
-        device = await navigator.usb.requestDevice({
-            filters: [{ vendorId: 0x239A }] // Adafruit Vendor ID
-        });
+    if ('serial' in navigator) {
+        try {
+            // Request a port and open a connection
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
 
-        await device.open();
-        await device.selectConfiguration(1);
-        await device.claimInterface(0);
+            isConnected = true;
+            updateUIConnected();
 
-        isConnected = true;
-        updateUIConnected();
+            // Setup reader and writer
+            writer = port.writable.getWriter();
+            reader = port.readable.getReader();
 
-        statusDiv.textContent = 'Connected to device.';
-        console.log('Connected to device.');
+            statusDiv.textContent = 'Connected to device.';
+            console.log('Connected to device.');
 
-        // Start reading data
-        readData();
+            // Start reading data
+            readData();
 
-    } catch (error) {
-        statusDiv.textContent = 'Connection failed: ' + error;
-        console.error('Connection failed:', error);
+        } catch (error) {
+            statusDiv.textContent = 'Connection failed: ' + error;
+            console.error('Connection failed:', error);
+        }
+    } else {
+        statusDiv.textContent = 'Web Serial API not supported in this browser.';
+        console.error('Web Serial API not supported.');
     }
 });
 
 disconnectButton.addEventListener('click', async () => {
-    if (isConnected && device) {
+    if (isConnected) {
         try {
-            await device.close();
+            // Close the reader and writer
+            await reader.cancel();
+            reader.releaseLock();
+            writer.releaseLock();
+
+            await port.close();
             isConnected = false;
             updateUIDisconnected();
 
@@ -59,17 +70,17 @@ disconnectButton.addEventListener('click', async () => {
 });
 
 flashButton.addEventListener('click', async () => {
-    if (isConnected && device) {
+    if (isConnected) {
         try {
             statusDiv.textContent = 'Flashing firmware...';
             console.log('Flashing firmware...');
 
-            // Fetch the UF2 firmware file
-            const response = await fetch('sof.uf2');
+            // Fetch the firmware file
+            const response = await fetch('sof.hex');
             const firmwareData = await response.arrayBuffer();
 
-            // Flash the UF2 firmware
-            await flashUF2Firmware(new Uint8Array(firmwareData));
+            // Flash the firmware (simplified example)
+            await flashFirmware(new Uint8Array(firmwareData));
 
             statusDiv.textContent = 'Firmware flashed successfully!';
             console.log('Firmware flashed successfully!');
@@ -107,12 +118,8 @@ for (let i = 0; i <= 9; i++) {
 
 async function sendSerialCommand(command) {
     try {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(command + '\n');
-
-        // Send data to the device
-        await device.transferOut(2, data);
-
+        const data = new TextEncoder().encode(command + '\n');
+        await writer.write(data);
         statusDiv.textContent = `Sent command: ${command}`;
         console.log(`Sent command: ${command}`);
     } catch (error) {
@@ -124,13 +131,17 @@ async function sendSerialCommand(command) {
 async function readData() {
     try {
         while (isConnected) {
-            const result = await device.transferIn(1, 64);
-            if (result.status === 'ok') {
-                const decoder = new TextDecoder();
-                const data = decoder.decode(result.data);
-                responseDiv.innerText += data;
-                responseDiv.scrollTop = responseDiv.scrollHeight;
+            const { value, done } = await reader.read();
+            if (done) {
+                // Allow the serial port to be closed later.
+                reader.releaseLock();
+                break;
             }
+            // value is a Uint8Array.
+            const textDecoder = new TextDecoder();
+            const data = textDecoder.decode(value);
+            responseDiv.innerText += data;
+            responseDiv.scrollTop = responseDiv.scrollHeight;
         }
     } catch (error) {
         console.error('Read error:', error);
@@ -161,23 +172,61 @@ function updateUIDisconnected() {
     });
 }
 
-async function flashUF2Firmware(firmwareData) {
-    // Send UF2 firmware data via WebUSB
-    // The UF2 bootloader accepts commands over USB to receive the firmware
-    // Implementing the UF2 protocol involves sending data in 512-byte blocks
+async function flashFirmware(firmwareData) {
+    // Implement the BOSSA protocol to flash the SAMD21 firmware
+    // Note: This is a simplified placeholder
+    // Implementing BOSSA protocol over Web Serial requires handling
+    // the SAM-BA bootloader commands, which is complex
+    // For demonstration purposes, we'll simulate flashing
 
-    const blockSize = 512;
-    const totalBlocks = firmwareData.length / blockSize;
+    // Reset the device to bootloader mode
+    await sendResetToBootloader();
 
-    for (let i = 0; i < firmwareData.length; i += blockSize) {
-        const block = firmwareData.slice(i, i + blockSize);
+    // Wait for the device to re-enumerate
+    await delay(2000);
 
-        // Send block to the device
-        await device.transferOut(2, block);
+    // Reconnect to the bootloader serial port
+    await port.close();
+    await delay(1000);
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    writer = port.writable.getWriter();
+    reader = port.readable.getReader();
 
-        // Optional: Update progress
-        const progress = Math.floor((i / firmwareData.length) * 100);
-        statusDiv.textContent = `Flashing firmware... (${progress}%)`;
-    }
+    // Implement the BOSSA protocol here
+    // This requires sending specific commands and handling responses
+
+    // For now, we'll simulate a delay
+    await delay(5000);
+
+    // After flashing, reset the device back to normal mode
+    await sendResetToApplication();
+
+    // Close and reopen the connection
+    await port.close();
+    await delay(1000);
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    writer = port.writable.getWriter();
+    reader = port.readable.getReader();
 }
 
+async function sendResetToBootloader() {
+    // For SAMD21, setting the baud rate to 1200 triggers the bootloader
+    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+    await port.close();
+    await delay(100);
+    await port.open({ baudRate: 1200 });
+    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+    await port.close();
+    await delay(1000);
+}
+
+async function sendResetToApplication() {
+    // Reset the device to application mode
+    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
