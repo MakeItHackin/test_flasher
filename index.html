@@ -1,0 +1,44 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Arduino Flasher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Optional: Link to the CSS file -->
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Arduino Flasher</h1>
+    <p>Use this interface to flash your Arduino with the pre-compiled firmware.</p>
+    <button id="connect">Connect to Arduino</button>
+    <button id="flash" disabled>Flash Firmware</button>
+    <div id="status"></div>
+
+    <!-- Include the script file -->
+    <script src="script.js"></script>
+</body>
+</html>
