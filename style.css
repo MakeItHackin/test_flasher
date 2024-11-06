@@ -1,0 +1,23 @@
+/* style.css */
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 50px;
+}
+
+h1 {
+    color: #333;
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 16px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+#status {
+    margin-top: 20px;
+    font-weight: bold;
+}
