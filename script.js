@@ -21,12 +21,13 @@ for (let i = 0; i <= 9; i++) {
 }
 
 // Event listener for Connect button
+// Event listener for Connect button
 connectButton.addEventListener('click', async () => {
     try {
         if ('serial' in navigator) {
             // Request a port and open a connection.
             port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 115200 });
+            await port.open({ baudRate: 921600 }); // Updated baud rate
 
             isConnected = true;
             updateUIConnected();
@@ -49,6 +50,7 @@ connectButton.addEventListener('click', async () => {
         console.error('Connection failed:', error);
     }
 });
+
 
 // Event listener for Disconnect button
 disconnectButton.addEventListener('click', async () => {
