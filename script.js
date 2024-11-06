@@ -157,87 +157,42 @@ async function readData() {
     }
 }
 
-// Function to flash firmware without wrapping
+// Function to flash firmware by sending each UF2 block sequentially
 async function flashFirmware(firmwareData) {
     try {
-        console.log('Flashing firmware...');
+        const blockSize = 512; // Each UF2 block is 512 bytes
+        const totalBlocks = firmwareData.length / blockSize;
 
-        // Verify that the firmwareData length is exactly 512 bytes (one UF2 block)
-        if (firmwareData.length !== 512) {
-            throw new Error(`Firmware data length is ${firmwareData.length} bytes, expected 512 bytes.`);
+        console.log(`Firmware size: ${firmwareData.length} bytes`);
+        console.log(`Total UF2 blocks to flash: ${totalBlocks}`);
+
+        for (let i = 0; i < totalBlocks; i++) {
+            const start = i * blockSize;
+            const end = start + blockSize;
+            const uf2Block = firmwareData.slice(start, end);
+
+            // Optional: Verify the UF2 block integrity
+            if (uf2Block.length !== blockSize) {
+                throw new Error(`UF2 block ${i + 1} is incomplete. Expected ${blockSize} bytes, got ${uf2Block.length} bytes.`);
+            }
+
+            // Send the UF2 block
+            await writer.write(uf2Block);
+            console.log(`UF2 Block ${i + 1}/${totalBlocks} sent successfully.`);
+
+            // Update flashing progress
+            const progress = Math.floor(((i + 1) / totalBlocks) * 100);
+            statusDiv.textContent = `Flashing firmware... (${progress}%)`;
         }
 
-        // Send the UF2 block directly
-        await writer.write(firmwareData);
-        console.log('Firmware flashed successfully!');
-
-        // Update status
+        // Final status update
         statusDiv.textContent = 'Firmware flashed successfully!';
+        console.log('Firmware flashing completed successfully.');
     } catch (error) {
         throw new Error(`Error during flashing: ${error.message}`);
     }
 }
 
-
-// Function to create a UF2 block
-function createUF2Block(data, blockNumber, totalBlocks) {
-    const uf2 = new Uint8Array(512);
-    const MAGIC_START0 = 0x0A324655; // 'UF2\n' in little endian
-    const MAGIC_START1 = 0x9E5D5157;
-    const MAGIC_END = 0x0AB16F30;
-
-    // Set magic start words
-    uf2.set(new Uint8Array([0x55, 0x46, 0x32, 0x0A]), 0); // 'UF2\n'
-    uf2.set(new Uint8Array([0x57, 0x51, 0x5D, 0x9E]), 4); // Magic Start1
-
-    // Set flags (0x0 for no flags, 0x1 for family ID)
-    uf2[8] = 0x00;
-    uf2[9] = 0x00;
-    uf2[10] = 0x00;
-    uf2[11] = 0x00;
-
-    // Set target address (example: 0x00002000)
-    const targetAddress = 0x00002000;
-    uf2.set(new Uint8Array([
-        targetAddress & 0xFF,
-        (targetAddress >> 8) & 0xFF,
-        (targetAddress >> 16) & 0xFF,
-        (targetAddress >> 24) & 0xFF
-    ]), 12);
-
-    // Set payload size (480 bytes)
-    uf2[16] = 0xE0; // 480 bytes
-    uf2[17] = 0x01;
-    uf2[18] = 0x00;
-    uf2[19] = 0x00;
-
-    // Set family ID (example: 0xADA5BEEF)
-    uf2.set(new Uint8Array([0xEF, 0xBE, 0xA5, 0xAD]), 20);
-
-    // Set block number
-    uf2.set(new Uint8Array([
-        blockNumber & 0xFF,
-        (blockNumber >> 8) & 0xFF,
-        (blockNumber >> 16) & 0xFF,
-        (blockNumber >> 24) & 0xFF
-    ]), 24);
-
-    // Set total number of blocks
-    uf2.set(new Uint8Array([
-        totalBlocks & 0xFF,
-        (totalBlocks >> 8) & 0xFF,
-        (totalBlocks >> 16) & 0xFF,
-        (totalBlocks >> 24) & 0xFF
-    ]), 28);
-
-    // Set data
-    uf2.set(data, 32);
-
-    // Set magic end word
-    uf2.set(new Uint8Array([0x30, 0x6F, 0xB1, 0x0A]), 496);
-
-    return uf2;
-}
 
 // Function to update UI when connected
 function updateUIConnected() {
