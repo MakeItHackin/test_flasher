@@ -1,20 +1,30 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Arduino Flasher with Serial Interface</title>
+    <title>Arduino Serial Interface</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Inline CSS for simplicity -->
+    <!-- Inline CSS for styling -->
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
+            background-color: #f0f2f5;
         }
 
         h1 {
             color: #333;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .button-group {
+            margin-bottom: 20px;
         }
 
         button {
@@ -22,55 +32,108 @@
             font-size: 14px;
             margin: 5px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #45a049;
         }
 
         #status {
             margin-top: 20px;
             font-weight: bold;
-            color: green;
+            color: #333;
         }
 
         #response {
             margin-top: 20px;
             padding: 10px;
             border: 1px solid #ccc;
-            height: 150px;
+            height: 200px;
             overflow-y: auto;
             text-align: left;
-            background-color: #f9f9f9;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+
+        #commandSection {
+            margin-top: 30px;
         }
 
         #commandInput {
-            width: 80%;
+            width: 60%;
             padding: 10px;
             font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
         #sendCommand {
             padding: 10px 20px;
             font-size: 14px;
+            margin-left: 10px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #2196F3;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        #sendCommand:disabled {
+            background-color: #90caf9;
+            cursor: not-allowed;
+        }
+
+        #sendCommand:hover:not(:disabled) {
+            background-color: #1976d2;
         }
 
         .command-buttons {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
+            margin-top: 20px;
         }
 
         .command-buttons button {
-            flex: 1 0 21%; /* Adjust the percentage to control the button width */
+            flex: 1 0 30%;
             margin: 5px;
+            background-color: #ff9800;
+        }
+
+        .command-buttons button:hover:not(:disabled) {
+            background-color: #fb8c00;
+        }
+
+        .command-buttons button:disabled {
+            background-color: #ffcc80;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <h1>Arduino Flasher with Serial Interface</h1>
-    <p>Use this interface to flash your SAMD21-based Arduino and interact via serial commands.</p>
-    <div>
+    <h1>Arduino Serial Interface</h1>
+    <p>Connect, flash firmware, and communicate with your SAMD21-based Arduino device.</p>
+
+    <div class="button-group">
         <button id="connect">Connect</button>
         <button id="disconnect" disabled>Disconnect</button>
         <button id="flash" disabled>Flash Firmware</button>
+    </div>
+
+    <div id="commandSection">
+        <input type="text" id="commandInput" placeholder="Enter command here..." disabled>
+        <button id="sendCommand" disabled>Send Command</button>
     </div>
 
     <div class="command-buttons">
@@ -86,12 +149,7 @@
         <button id="cmd9" disabled>9 - Turn on NeoPixels</button>
     </div>
 
-    <div>
-        <input type="text" id="commandInput" placeholder="Enter command here..." disabled>
-        <button id="sendCommand" disabled>Send Command</button>
-    </div>
-
-    <div id="status"></div>
+    <div id="status">Disconnected.</div>
     <div id="response"></div>
 
     <!-- Include the script file -->
