@@ -158,33 +158,25 @@ async function readData() {
     }
 }
 
-// Function to flash firmware (simplified)
+// Function to flash firmware (simplified and may need adjustments)
 async function flashFirmware(firmwareData) {
-    // Implement the UF2 flashing protocol here
-    // This requires sending UF2 blocks with proper headers and checksums
-    // For demonstration purposes, we'll simulate flashing by sending the data directly
-
-    // **Warning**: Implementing the UF2 protocol correctly is crucial. The following is a simplified example.
-
-    const blockSize = 512;
-    const totalBlocks = Math.ceil(firmwareData.length / blockSize);
-
-    for (let i = 0; i < totalBlocks; i++) {
-        const start = i * blockSize;
-        const end = start + blockSize;
-        const block = firmwareData.slice(start, end);
-
-        // Create UF2 block
-        const uf2Block = createUF2Block(block, i, totalBlocks);
-
-        // Send UF2 block
-        await writer.write(uf2Block);
-
-        // Optional: Update progress
-        const progress = Math.floor(((i + 1) / totalBlocks) * 100);
-        statusDiv.textContent = `Flashing firmware... (${progress}%)`;
+    // Example: Send firmware data in chunks
+    const chunkSize = 64; // Adjust based on device's capability
+    for (let i = 0; i < firmwareData.length; i += chunkSize) {
+        const chunk = firmwareData.slice(i, i + chunkSize);
+        await writer.write(chunk);
+        await delay(50); // Small delay between chunks
     }
+    // Optionally, send an end-of-flash command
+    const endCommand = new TextEncoder().encode('END\n');
+    await writer.write(endCommand);
 }
+
+// Utility function for delays
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 
 // Function to create a UF2 block
 function createUF2Block(data, blockNumber, totalBlocks) {
